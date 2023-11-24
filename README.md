@@ -6,7 +6,7 @@ Here, we delineated 17 *personalized functional networks* for Adolescent Brain C
 We also provided an exemplary usage of this resource in predicting unseen individuals’ socioeconomic status (**SES**) with *personalized functional network topography*, and discovered that the association between functional topography and SES was hierarchically patterned on the cortex along the sensorimotor-association (**S-A**) cortical axis.  
 
 ## `scripts`
-- The [stpe01_participantsSelection](stpe01_participantsSelection/) folder contains scripts used to select participants used for  *personalized functional networks* construction and SES prediction.
+- The [step01_participantsSelection](step01_participantsSelection/) folder contains scripts used to select participants used for  personalized functional networks construction and SES prediction.
 
 - The [step02_singleParcel_NMF](step02_singleParcel_NMF/) folder contains scripts used to generate personalized functional network topography with non-negative matrix factorization (**NMF**) for ABCD children and scripts used to get results of *Figure 1* and *Figure 2*.
 
