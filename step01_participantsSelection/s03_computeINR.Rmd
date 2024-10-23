@@ -1,0 +1,70 @@
+---
+title: "get_INR"
+author: "zhaoshaoling"
+date: "2024-09-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+rm(list=ls())
+library(data.table)
+
+abcd_demo<-fread('/Users/zhaoshaoling/Documents/Project/ABCD_indivTopography/BMCmed/step00_newSelection/ABCD_table/abcd_demo_merged_n6001.csv')
+setDF(abcd_demo)
+
+```
+
+```{r}
+# delete children from the same family
+abcd_demo_final <- abcd_demo[!duplicated(abcd_demo$real_family_id), ]
+cat('Remaing Sample',nrow(abcd_demo_final))
+
+write.csv(abcd_demo_final,'/Users/zhaoshaoling/Documents/Project/ABCD_indivTopography/BMCmed/step00_newSelection/ABCD_table/abcd_demo_merged_n6001_withoutsibilings.csv')
+```
+
+```{r}
+#compute income-to-need ratio
+abcd_deSES<-abcd_demo[which(abcd_demo$income<11),] #remove 777,999 
+
+income_to_median <- function(income) {
+  switch(income,
+         '1' = 2500,               # "Less than $5,000" median
+         '2' = 8500,               # ($5000 + $11999) / 2
+         '3' = 13999.5,            # ($12000 + $15999) / 2
+         '4' = 20499.5,            # ($16000 + $24999) / 2
+         '5' = 29999.5,            # ($25000 + $34999) / 2
+         '6' = 42499.5,            # ($35000 + $49999) / 2
+         '7' = 62499.5,            # ($50000 + $74999) / 2
+         '8' = 87499.5,            # ($75000 + $99999) / 2
+         '9' = 149999.5,           # ($100000 + $199999) / 2
+         '10' = 200000,            # $200000 (start value)
+         NA                        # default NA
+  )
+}
+
+abcd_deSES$income_median <- sapply(abcd_deSES$income, income_to_median)
+abcd_deSES$interviewYear<-substr(abcd_deSES$interview_date,start=nchar(abcd_deSES$interview_date)-3, stop=nchar(abcd_deSES$interview_date))
+abcd_deSES$interviewYear=as.numeric(abcd_deSES$interviewYear)
+
+# poverty line in the USA
+reference_data <- data.frame(familysize = c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,
+                                            1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,
+                                            1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19),
+                             povertyline = c(12140,16460,20780,25100,29420,33740,38060,42380,46700,51020,55340,59660,63980,68300,72620,76940,81260,85580,89900,
+                                             12060,16240,20420,24600,28780,32960,37140,41320,45500,49680,53860,58040,62220,66400,70580,74760,78940,83120,87300,
+                                             11880,16020,20160,24300,28440,32580,36730,40890,45050,49210,53370,57530,61690,65850,70010,74170,78330,82490,86650),
+                             Year = c(rep(2018,19), rep(2017,19), rep(2016,19)))
+
+# merge with interviewYear and demo_roster_v2(family_size)
+abcd_deSES1 <- merge(abcd_deSES, reference_data,
+                                         by.x = c("interviewYear", "family_size"),
+                                         by.y = c("Year", "familysize"), 
+                                         all.x = TRUE)
+
+abcd_deSES1$adjIncome<-abcd_deSES1$income_median/abcd_deSES1$povertyline
+
+cat("After computing INR, subject number is ",nrow(abcd_deSES1))
+write.csv(abcd_deSES1,'/Users/zhaoshaoling/Documents/Project/ABCD_indivTopography/BMCmed/step00_newSelection/ABCD_table/SES_Topo_Label.csv')
+
+```
+
